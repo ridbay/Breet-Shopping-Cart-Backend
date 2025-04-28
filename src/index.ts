@@ -3,12 +3,10 @@ import mongoose from "mongoose";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { config } from "dotenv";
+
 import productRoutes from "./routes/product.routes";
 import cartRoutes from "./routes/cart.routes";
-
-// Load environment variables
-config();
+import config from "./config/config";
 
 const app = express();
 
@@ -19,8 +17,8 @@ app.use(helmet());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"),
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100"),
+  windowMs: 900000,
+  max: 10,
 });
 app.use(limiter);
 
@@ -43,7 +41,18 @@ app.use(
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/shopping-cart")
+  .connect(config.DB.MONGODB_URI || config.DB.MONGODB_LOCAL_URI || "", {
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    family: 4,
+    retryWrites: true,
+    w: "majority",
+    connectTimeoutMS: 10000,
+    maxPoolSize: 10,
+    minPoolSize: 5,
+    maxIdleTimeMS: 30000,
+    retryReads: true,
+  })
   .then(() => {
     console.log("Connected to MongoDB");
     const port = process.env.PORT || 3000;
@@ -53,7 +62,35 @@ mongoose
   })
   .catch((error) => {
     console.error("MongoDB connection error:", error);
-    process.exit(1);
+    // Try to connect using the direct URI if the SRV connection fails
+    if (config.DB.MONGODB_DIRECT_URI) {
+      console.log("Attempting to connect using direct URI...");
+      mongoose
+        .connect(config.DB.MONGODB_DIRECT_URI, {
+          serverSelectionTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+          family: 4,
+          retryWrites: true,
+          w: "majority",
+        })
+        .then(() => {
+          console.log("Connected to MongoDB using direct URI");
+          const port = process.env.PORT || 3000;
+          app.listen(port, () => {
+            console.log(`Server is running on port ${port}`);
+          });
+        })
+        .catch((directError) => {
+          console.error("Direct connection also failed:", directError);
+          process.exit(1);
+        });
+    } else {
+      // If no direct URI is available, retry the original connection
+      setTimeout(() => {
+        console.log("Retrying MongoDB connection...");
+        process.exit(1);
+      }, 5000);
+    }
   });
 
 // Handle unhandled promise rejections

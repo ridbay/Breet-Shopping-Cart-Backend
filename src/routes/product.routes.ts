@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { body, param, query } from "express-validator";
+import { check, param, query } from "express-validator";
 import { ProductController } from "../controllers/product.controller";
+import validateRequest from "../middlewares/validateRequests";
 
 const router = Router();
 const productController = new ProductController();
@@ -9,19 +10,20 @@ const productController = new ProductController();
 router.post(
   "/",
   [
-    body("name").trim().notEmpty().withMessage("Product name is required"),
-    body("description")
+    check("name").trim().notEmpty().withMessage("Product name is required"),
+    check("description")
       .trim()
       .notEmpty()
       .withMessage("Description is required"),
-    body("price")
+    check("price")
       .isFloat({ min: 0 })
       .withMessage("Price must be a positive number"),
-    body("stock")
+    check("stock")
       .isInt({ min: 0 })
       .withMessage("Stock must be a non-negative integer"),
-    body("category").trim().notEmpty().withMessage("Category is required"),
+    check("category").trim().notEmpty().withMessage("Category is required"),
   ],
+  validateRequest,
   productController.createProduct
 );
 
@@ -29,6 +31,7 @@ router.post(
 router.get(
   "/:id",
   [param("id").isMongoId().withMessage("Invalid product ID")],
+  validateRequest,
   productController.getProduct
 );
 
@@ -37,10 +40,11 @@ router.patch(
   "/:id/stock",
   [
     param("id").isMongoId().withMessage("Invalid product ID"),
-    body("quantity")
+    check("quantity")
       .isInt({ min: 0 })
       .withMessage("Quantity must be a non-negative integer"),
   ],
+  validateRequest,
   productController.updateStock
 );
 
@@ -57,6 +61,7 @@ router.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
+  validateRequest,
   productController.listProducts
 );
 
@@ -64,6 +69,7 @@ router.get(
 router.get(
   "/search",
   [query("query").trim().notEmpty().withMessage("Search query is required")],
+  validateRequest,
   productController.searchProducts
 );
 

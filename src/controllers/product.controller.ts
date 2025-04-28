@@ -11,7 +11,11 @@ export class ProductController {
       await redisService.cacheProduct(product);
       res.status(201).json(product);
     } catch (error) {
-      res.status(400).json({ error: "Failed to create product" });
+      console.log(error);
+      res.status(500).json({
+        status: false,
+        message: "Failed to create product",
+      });
     }
   }
 

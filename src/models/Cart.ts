@@ -37,7 +37,6 @@ const CartSchema: Schema = new Schema(
     userId: {
       type: String,
       required: true,
-      index: true,
     },
     items: [CartItemSchema],
     total: {
