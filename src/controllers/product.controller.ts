@@ -8,6 +8,7 @@ export class ProductController {
     try {
       const product = new Product(req.body);
       await product.save();
+
       await redisService.cacheProduct(product);
       res.status(201).json(product);
     } catch (error) {

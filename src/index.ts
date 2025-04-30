@@ -41,7 +41,7 @@ app.use(
 
 // Connect to MongoDB
 mongoose
-  .connect(config.DB.MONGODB_URI || config.DB.MONGODB_LOCAL_URI || "", {
+  .connect(config.DB.MONGODB_LOCAL_URI || "", {
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000,
     family: 4,

@@ -29,7 +29,7 @@ router.post(
 
 // Get a product by ID
 router.get(
-  "/:id",
+  "/id/:id",
   [param("id").isMongoId().withMessage("Invalid product ID")],
   validateRequest,
   productController.getProduct
@@ -37,7 +37,7 @@ router.get(
 
 // Update product stock
 router.patch(
-  "/:id/stock",
+  "/id/:id/stock",
   [
     param("id").isMongoId().withMessage("Invalid product ID"),
     check("quantity")
